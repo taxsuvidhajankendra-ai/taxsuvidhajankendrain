@@ -9,6 +9,8 @@ import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import WhatsAppButton from "./components/WhatsAppButton";
+import LiveChat from "./components/LiveChat";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      <WhatsAppButton />
+      <LiveChat />
     </TooltipProvider>
   </QueryClientProvider>
 );
