@@ -1,25 +1,30 @@
-import { useState } from "react";
-import { Send, Upload, CheckCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Upload, CheckCircle, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-const serviceOptions = [
-  "GST Registration",
-  "GST Return Filing",
-  "Income Tax Return (ITR)",
-  "TDS Filing",
-  "PAN Card Services",
-  "Aadhaar Services",
-  "Other",
+type ServiceType = Database["public"]["Enums"]["service_type"];
+
+const serviceOptions: { label: string; value: ServiceType }[] = [
+  { label: "GST Registration / Filing", value: "GST" },
+  { label: "Income Tax Return (ITR)", value: "ITR" },
+  { label: "PAN Card Services", value: "PAN" },
+  { label: "TDS Filing", value: "TDS" },
+  { label: "Others", value: "Others" },
 ];
 
 const CustomerForm = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     mobile: "",
     email: "",
     city: "",
-    service: "",
+    service: "" as ServiceType | "",
     description: "",
     consent: false,
   });
@@ -29,15 +34,77 @@ const CustomerForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).slice(0, 5);
+      setFiles((prev) => [...prev, ...newFiles].slice(0, 5));
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async (): Promise<string[]> => {
+    const paths: string[] = [];
+    for (const file of files) {
+      const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error } = await supabase.storage.from("documents").upload(filePath, file);
+      if (error) {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${file.name}`);
+      } else {
+        paths.push(filePath);
+      }
+    }
+    return paths;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.consent) {
       toast.error("Please agree to the data storage consent.");
       return;
     }
-    // In production, this would save to Lovable Cloud
-    setSubmitted(true);
-    toast.success("Your request has been submitted! We'll contact you soon.");
+    if (!formData.service) {
+      toast.error("Please select a service.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Upload documents
+      const documentPaths = files.length > 0 ? await uploadFiles() : [];
+
+      // Save to database
+      const submissionData = {
+        full_name: formData.fullName.trim(),
+        mobile_number: formData.mobile.trim(),
+        email: formData.email.trim(),
+        city: formData.city.trim(),
+        service: formData.service as ServiceType,
+        description: formData.description.trim() || null,
+        document_paths: documentPaths.length > 0 ? documentPaths : null,
+        consent: true,
+      };
+
+      const { error: dbError } = await supabase.from("submissions").insert(submissionData);
+      if (dbError) throw dbError;
+
+      // Sync to Google Sheets (fire and forget)
+      supabase.functions.invoke("sync-to-sheets", {
+        body: submissionData,
+      }).catch((err) => console.error("Sheets sync error:", err));
+
+      setSubmitted(true);
+      toast.success("Your request has been submitted! We'll contact you soon.");
+    } catch (err) {
+      console.error("Submission error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -51,7 +118,11 @@ const CustomerForm = () => {
               Thank you, {formData.fullName}. We'll contact you at {formData.mobile} shortly.
             </p>
             <button
-              onClick={() => { setSubmitted(false); setFormData({ fullName: "", mobile: "", email: "", city: "", service: "", description: "", consent: false }); }}
+              onClick={() => {
+                setSubmitted(false);
+                setFiles([]);
+                setFormData({ fullName: "", mobile: "", email: "", city: "", service: "", description: "", consent: false });
+              }}
               className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
             >
               Submit Another Request
@@ -103,7 +174,7 @@ const CustomerForm = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Email *</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Email Address *</label>
               <input
                 name="email"
                 value={formData.email}
@@ -140,18 +211,9 @@ const CustomerForm = () => {
             >
               <option value="">Choose a service...</option>
               {serviceOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Upload Documents</label>
-            <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-input bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Click to upload PDF, JPG, PNG files</span>
-              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple />
-            </div>
           </div>
 
           <div>
@@ -165,6 +227,37 @@ const CustomerForm = () => {
               className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
               placeholder="Briefly describe your requirement..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Upload Documents</label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-input bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Click to upload PDF, JPG, PNG (max 5 files)</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                onChange={handleFileChange}
+              />
+            </div>
+            {files.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm bg-muted/40 px-3 py-1.5 rounded-md">
+                    <span className="text-muted-foreground truncate">{f.name}</span>
+                    <button type="button" onClick={() => removeFile(i)} className="text-destructive hover:opacity-70">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <label className="flex items-start gap-2 cursor-pointer">
@@ -181,10 +274,11 @@ const CustomerForm = () => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-saffron-gradient text-primary-foreground font-semibold text-lg hover:opacity-90 transition-opacity"
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-saffron-gradient text-primary-foreground font-semibold text-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Send className="h-5 w-5" />
-            Submit Request
+            {submitting ? "Submitting..." : "Submit Request"}
           </button>
         </form>
       </div>
