@@ -19,7 +19,7 @@ const Contact = () => (
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
             {[
               { icon: Mail, title: "Email", detail: "taxsuvidhajankendra@gmail.com" },
-              { icon: Phone, title: "Phone", detail: "+91 XXXXX XXXXX" },
+              { icon: Phone, title: "Phone / WhatsApp", detail: "+91 98917 69507" },
               { icon: Clock, title: "Working Hours", detail: "Mon - Sat, 9 AM - 7 PM" },
             ].map((item) => (
               <div key={item.title} className="bg-card rounded-xl border border-border shadow-card p-6 text-center">

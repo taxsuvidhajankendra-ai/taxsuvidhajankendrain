@@ -58,11 +58,12 @@ const Footer = () => {
               </li>
             </ul>
             <div className="flex items-center gap-3 mt-4">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-                <a key={i} href="#" className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors">
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
+              <a href="https://www.instagram.com/taxsuvidhaofficial/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors">
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61584777467827" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors">
+                <Facebook className="h-4 w-4" />
+              </a>
             </div>
           </div>
         </div>
