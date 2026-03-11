@@ -41,8 +41,31 @@ const allServices = [
     features: ["Enrollment", "Update/Correction", "Download", "Linking Services"],
     price: "₹100",
   },
+  {
+    icon: Building2, title: "Business Registration", titleHi: "व्यापार पंजीकरण",
+    description: "Complete business registration services including company incorporation, MSME registration and trade license.",
+    features: ["Company Registration", "MSME Registration", "Trade License", "Compliance Setup"],
+    price: "₹2,000",
+  },
+  {
+    icon: MessageSquare, title: "Tax Consultation", titleHi: "कर परामर्श",
+    description: "Expert tax consultation for individuals and businesses. Get personalized advice on tax planning and compliance.",
+    features: ["Tax Planning", "Expert Advice", "Compliance Review", "Personalized Solutions"],
+    price: "₹500",
+  },
+  {
+    icon: Palette, title: "Logo Design", titleHi: "लोगो डिज़ाइन",
+    description: "Professional logo design for your business. Modern, unique designs that represent your brand identity.",
+    features: ["Custom Design", "Multiple Concepts", "Source Files", "Unlimited Revisions"],
+    price: "₹1,500",
+  },
+  {
+    icon: Globe, title: "Website Design", titleHi: "वेबसाइट डिज़ाइन",
+    description: "Business website design to establish your online presence and help customers find you easily.",
+    features: ["Responsive Design", "SEO Optimized", "Fast Loading", "Mobile Friendly"],
+    price: "₹5,000",
+  },
 ];
-
 const Services = () => (
   <div className="min-h-screen bg-background">
     <Header />
