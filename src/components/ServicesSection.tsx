@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, BarChart3, Calculator, Receipt, CreditCard, Fingerprint } from "lucide-react";
+import { FileText, BarChart3, Calculator, Receipt, CreditCard, Fingerprint, Building2, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const services = [
