@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Send, Upload, CheckCircle, X } from "lucide-react";
+import { Send, Upload, CheckCircle, X, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -26,6 +26,7 @@ const CustomerForm = () => {
     city: "",
     service: "" as ServiceType | "",
     description: "",
+    bookingDate: "",
     consent: false,
   });
 
@@ -74,10 +75,8 @@ const CustomerForm = () => {
     setSubmitting(true);
 
     try {
-      // Upload documents
       const documentPaths = files.length > 0 ? await uploadFiles() : [];
 
-      // Save to database
       const submissionData = {
         full_name: formData.fullName.trim(),
         mobile_number: formData.mobile.trim(),
@@ -86,6 +85,7 @@ const CustomerForm = () => {
         service: formData.service as ServiceType,
         description: formData.description.trim() || null,
         document_paths: documentPaths.length > 0 ? documentPaths : null,
+        booking_date: formData.bookingDate || null,
         consent: true,
       };
 
@@ -98,7 +98,7 @@ const CustomerForm = () => {
       }).catch((err) => console.error("Sheets sync error:", err));
 
       setSubmitted(true);
-      toast.success("Your request has been submitted! We'll contact you soon.");
+      toast.success("Your booking has been submitted! We'll contact you soon.");
     } catch (err) {
       console.error("Submission error:", err);
       toast.error("Something went wrong. Please try again.");
@@ -113,7 +113,7 @@ const CustomerForm = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10">
             <CheckCircle className="h-16 w-16 text-accent mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-foreground mb-2">Request Submitted!</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-2">Booking Submitted!</h3>
             <p className="text-muted-foreground mb-4">
               Thank you, {formData.fullName}. We'll contact you at {formData.mobile} shortly.
             </p>
@@ -121,11 +121,11 @@ const CustomerForm = () => {
               onClick={() => {
                 setSubmitted(false);
                 setFiles([]);
-                setFormData({ fullName: "", mobile: "", email: "", city: "", service: "", description: "", consent: false });
+                setFormData({ fullName: "", mobile: "", email: "", city: "", service: "", description: "", bookingDate: "", consent: false });
               }}
               className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
             >
-              Submit Another Request
+              Submit Another Booking
             </button>
           </div>
         </div>
@@ -133,12 +133,17 @@ const CustomerForm = () => {
     );
   }
 
+  // Get tomorrow's date as min for booking
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
+
   return (
     <section className="py-20 bg-background" id="book">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <span className="inline-block px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-semibold mb-3">
-            Get Started
+            Book Now
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
             Book a Service
@@ -161,7 +166,7 @@ const CustomerForm = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number *</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Phone Number *</label>
               <input
                 name="mobile"
                 value={formData.mobile}
@@ -200,24 +205,40 @@ const CustomerForm = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Select Service *</label>
-            <select
-              name="service"
-              value={formData.service}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
-            >
-              <option value="">Choose a service...</option>
-              {serviceOptions.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Select Service *</label>
+              <select
+                name="service"
+                value={formData.service}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+              >
+                <option value="">Choose a service...</option>
+                {serviceOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Date</label>
+              <div className="relative">
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  name="bookingDate"
+                  type="date"
+                  value={formData.bookingDate}
+                  onChange={handleChange}
+                  min={minDate}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                />
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Message</label>
             <textarea
               name="description"
               value={formData.description}
@@ -278,7 +299,7 @@ const CustomerForm = () => {
             className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-saffron-gradient text-primary-foreground font-semibold text-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Send className="h-5 w-5" />
-            {submitting ? "Submitting..." : "Submit Request"}
+            {submitting ? "Submitting..." : "Book Service"}
           </button>
         </form>
       </div>

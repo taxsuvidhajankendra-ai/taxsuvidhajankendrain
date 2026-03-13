@@ -31,6 +31,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/talk-with-customer" element={<TalkWithCustomer />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
