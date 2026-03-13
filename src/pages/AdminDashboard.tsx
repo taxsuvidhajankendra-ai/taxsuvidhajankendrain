@@ -96,6 +96,9 @@ const AdminDashboard = () => {
           <button onClick={loadSubmissions} className="p-2 rounded-lg border border-input hover:bg-muted transition-colors" title="Refresh">
             <RefreshCw className="h-4 w-4" />
           </button>
+          <Link to="/admin/talk-with-customer" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium text-sm hover:opacity-90 transition-opacity">
+            <Users className="h-4 w-4" /> Talk With Customer
+          </Link>
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium text-sm hover:opacity-90 transition-opacity">
             <Download className="h-4 w-4" /> Export CSV
           </button>
