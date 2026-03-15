@@ -14,8 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          sender_name: string
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_name?: string
+          submission_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_name?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_messages_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submissions: {
         Row: {
+          assigned_to: string | null
           booking_date: string | null
           city: string
           consent: boolean
@@ -26,10 +62,12 @@ export type Database = {
           full_name: string
           id: string
           mobile_number: string
+          payment_link: string | null
           service: Database["public"]["Enums"]["service_type"]
           status: string
         }
         Insert: {
+          assigned_to?: string | null
           booking_date?: string | null
           city: string
           consent?: boolean
@@ -40,10 +78,12 @@ export type Database = {
           full_name: string
           id?: string
           mobile_number: string
+          payment_link?: string | null
           service: Database["public"]["Enums"]["service_type"]
           status?: string
         }
         Update: {
+          assigned_to?: string | null
           booking_date?: string | null
           city?: string
           consent?: boolean
@@ -54,6 +94,7 @@ export type Database = {
           full_name?: string
           id?: string
           mobile_number?: string
+          payment_link?: string | null
           service?: Database["public"]["Enums"]["service_type"]
           status?: string
         }
@@ -91,7 +132,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "worker" | "owner"
       service_type: "GST" | "ITR" | "PAN" | "TDS" | "Others"
     }
     CompositeTypes: {
@@ -220,7 +261,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "worker", "owner"],
       service_type: ["GST", "ITR", "PAN", "TDS", "Others"],
     },
   },
